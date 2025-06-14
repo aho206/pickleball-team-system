@@ -9,7 +9,7 @@ const next = require('next');
 const fetch = require('node-fetch');
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const hostname = dev ? 'localhost' : '0.0.0.0'; // 生产环境绑定到所有接口
 const port = process.env.PORT || 3000;
 
 // 初始化 Next.js 应用
@@ -185,7 +185,7 @@ app.prepare().then(() => {
   });
 
   // 启动服务器
-  httpServer.listen(port, (err) => {
+  httpServer.listen(port, hostname, (err) => {
     if (err) throw err;
     console.log(`> Ready on http://${hostname}:${port}`);
   });
