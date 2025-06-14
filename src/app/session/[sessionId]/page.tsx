@@ -34,7 +34,7 @@ export default function SessionPage() {
         setError('')
         setLastUpdated(new Date())
       } else {
-        setError(data.error || '获取会话失败')
+        setError(data.error || '获取球局失败')
       }
     } catch (error) {
       setError('网络错误，请重试')
@@ -108,8 +108,8 @@ export default function SessionPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-gray-400 text-xl mb-4">🔍</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">会话不存在</h1>
-          <p className="text-gray-600 mb-6">请检查会话ID是否正确，或联系管理员确认会话状态</p>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">球局不存在</h1>
+          <p className="text-gray-600 mb-6">请检查球局编号是否正确，或联系管理员确认球局状态</p>
           <div className="flex space-x-3 justify-center">
             <button
               onClick={() => window.location.href = '/'}
@@ -133,7 +133,7 @@ export default function SessionPage() {
     <div className="min-h-screen bg-gray-50">
       {/* 导航栏 */}
       <Navigation
-        title={`🏓 会话 ${session.id}`}
+        title={`🏓 球局 ${session.id}`}
         showBackButton={true}
         backUrl="/"
         backText="返回主页"
@@ -162,7 +162,7 @@ export default function SessionPage() {
         }
       />
 
-      {/* 会话信息 */}
+      {/* 球局信息 */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <p className="text-sm text-gray-600">
