@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GameSession, Participant, ApiResponse } from '@/lib/types';
 import { getGameSession, saveGameSession } from '@/lib/memory-store';
 import { validateAuthSession, isAdmin } from '@/lib/auth';
-import { maintainQueueSize } from '@/lib/algorithm';
+import { autoMaintainQueue } from '@/lib/algorithm';
 
 /**
  * 添加新参与者到会话
@@ -119,7 +119,7 @@ export async function POST(
     session.updatedAt = new Date();
 
     // 重新生成等待队列，让新人能够参与下一轮分配
-    maintainQueueSize(session, 2);
+    autoMaintainQueue(session);
 
     // 保存到内存存储
     await saveGameSession(session, session.createdBy);

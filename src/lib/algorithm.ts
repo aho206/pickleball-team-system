@@ -67,47 +67,37 @@ export function generateOptimalTeams(
     return Math.random() - 0.5;
   });
 
-  // 新的分配策略：
-  // 1. 确保每个场地都有比赛（如果人数足够）
-  // 2. 优先保持2组等待队列（8人）
+  // 新的通用分配策略：
+  // 1. 计算实际可用场地数（基于总人数）
+  // 2. 确保等待队列始终显示两组（8人），即使需要从当前比赛者中补充
   // 3. 剩余的人处于休息状态
   
   const totalPlayers = sortedParticipants.length;
   const maxCourtsCanFill = Math.min(courtCount, Math.floor(totalPlayers / 4));
   
-  // 计算实际需要的比赛人数和等待人数
-  let playingCount: number;
-  let queueCount: number;
-  
-  // 优先保证2组等待队列的策略
-  if (totalPlayers >= 12) { // 至少12人才能有2组等待
-    if (totalPlayers >= courtCount * 4 + 8) {
-      // 人数充足：所有场地都有比赛 + 2组等待
-      playingCount = courtCount * 4;
-      queueCount = 8;
-    } else {
-      // 优先保证2组等待，减少场地使用
-      const maxPlayingWithQueue = totalPlayers - 8;
-      const courtsCanUse = Math.floor(maxPlayingWithQueue / 4);
-      playingCount = courtsCanUse * 4;
-      queueCount = 8;
-    }
-  } else if (totalPlayers >= 8) {
-    // 人数中等：尽量填满场地 + 1组等待
-    const maxPlayingWithQueue = totalPlayers - 4;
-    const courtsCanUse = Math.min(courtCount, Math.floor(maxPlayingWithQueue / 4));
-    playingCount = courtsCanUse * 4;
-    queueCount = 4;
-  } else {
-    // 人数不足：尽量填满场地，没有等待队列
-    const maxCourtsCanFill = Math.min(courtCount, Math.floor(totalPlayers / 4));
-    playingCount = maxCourtsCanFill * 4;
-    queueCount = 0;
-  }
-
+  // 计算当前比赛人数
+  const playingCount = maxCourtsCanFill * 4;
   const playingPlayers = sortedParticipants.slice(0, playingCount);
-  const queuePlayers = sortedParticipants.slice(playingCount, playingCount + queueCount);
-  const waitingPlayers = sortedParticipants.slice(playingCount + queueCount);
+  
+  // 计算等待队列 - 关键改进：确保始终有两组
+  const remainingPlayers = sortedParticipants.slice(playingCount);
+  const queuePlayers = generateQueueWithSupplement(
+    remainingPlayers, 
+    playingPlayers, 
+    courtCount,
+    weights,
+    participants
+  );
+  
+  // 剩余休息的人（排除正在比赛和排队的）
+  const queuePlayerIds = queuePlayers.flatMap(match => [
+    match.team1.player1, match.team1.player2,
+    match.team2.player1, match.team2.player2
+  ]);
+  const playingPlayerIds = playingPlayers.map(p => p.id);
+  const waitingPlayers = sortedParticipants.filter(p => 
+    !playingPlayerIds.includes(p.id) && !queuePlayerIds.includes(p.id)
+  );
 
   // 使用全局优化算法分配场地
   const actualCourtsUsed = Math.ceil(playingCount / 4);
@@ -122,16 +112,13 @@ export function generateOptimalTeams(
       status: 'empty' as const
     });
   }
-  
-  // 生成等待队列
-  const queue = generateQueue(queuePlayers, weights, participants);
 
   // 计算统计信息
-  const stats = calculateAssignmentStats(courts, queue, weights, participants);
+  const stats = calculateAssignmentStats(courts, queuePlayers, weights, participants);
 
   return {
     courts,
-    queue,
+    queue: queuePlayers,
     waiting: waitingPlayers.map(p => p.id),
     stats
   };
@@ -541,35 +528,112 @@ function generateAllTeamCombinations(players: Participant[]): GameMatch[] {
 }
 
 /**
- * 生成预分配队列
+ * 生成等待队列，确保始终有两组，必要时从当前比赛者中补充
+ * @param remainingPlayers 剩余可用的参与者
+ * @param playingPlayers 当前比赛的参与者
+ * @param courtCount 场地数量
+ * @param weights 权重设置
+ * @param allParticipants 所有参与者
+ * @returns 等待队列比赛列表
  */
-function generateQueue(
-  waitingPlayers: Participant[], 
-  weights: Weight[], 
+function generateQueueWithSupplement(
+  remainingPlayers: Participant[],
+  playingPlayers: Participant[],
+  courtCount: number,
+  weights: Weight[],
   allParticipants: Participant[]
 ): GameMatch[] {
-  const queue: GameMatch[] = [];
+  const targetQueueSize = 2; // 始终保持两组
+  const playersPerMatch = 4;
+  const totalNeededPlayers = targetQueueSize * playersPerMatch;
   
-  if (waitingPlayers.length < 4) return queue;
+  // 构建队列候选人池
+  let queueCandidates = [...remainingPlayers];
   
-  // 生成多组等待队伍
-  const remainingPlayers = [...waitingPlayers];
-  
-  while (remainingPlayers.length >= 4) {
-    // 为当前4个玩家生成最优组合
-    const currentGroup = remainingPlayers.slice(0, 4);
-    const queueMatch = findBestTeamMatch(currentGroup, weights, allParticipants);
+  // 如果剩余人数不足以组成两组，从当前比赛者中补充
+  if (queueCandidates.length < totalNeededPlayers) {
+    const shortage = totalNeededPlayers - queueCandidates.length;
     
-    if (queueMatch) {
-      queue.push(queueMatch);
-      // 移除已分配的玩家
-      remainingPlayers.splice(0, 4);
-    } else {
+    // 从当前比赛者中选择比赛次数最多的人作为补充
+    const supplementPlayers = [...playingPlayers]
+      .sort((a, b) => {
+        // 优先选择比赛次数多的
+        if (a.gamesPlayed !== b.gamesPlayed) {
+          return b.gamesPlayed - a.gamesPlayed;
+        }
+        // 然后选择休息轮数少的（刚上场的）
+        if (a.restRounds !== b.restRounds) {
+          return a.restRounds - b.restRounds;
+        }
+        return Math.random() - 0.5;
+      })
+      .slice(0, shortage);
+    
+    queueCandidates.push(...supplementPlayers);
+  }
+  
+  // 生成两组队列
+  const queue: GameMatch[] = [];
+  const usedPlayers = new Set<string>();
+  
+  for (let i = 0; i < targetQueueSize && queueCandidates.length - usedPlayers.size >= playersPerMatch; i++) {
+    // 从未使用的候选人中选择4人
+    const availableCandidates = queueCandidates.filter(p => !usedPlayers.has(p.id));
+    
+    if (availableCandidates.length < playersPerMatch) {
       break;
+    }
+    
+    // 选择最优的4人组合
+    const selectedPlayers = selectOptimalQueueGroup(availableCandidates, allParticipants, playersPerMatch);
+    
+    if (selectedPlayers.length === playersPerMatch) {
+      // 为这4个玩家生成最优队伍组合
+      const bestMatch = findBestTeamMatch(selectedPlayers, weights, allParticipants);
+      
+      if (bestMatch) {
+        queue.push(bestMatch);
+        
+        // 标记这些玩家为已使用
+        [bestMatch.team1.player1, bestMatch.team1.player2, 
+         bestMatch.team2.player1, bestMatch.team2.player2].forEach(id => usedPlayers.add(id));
+      }
     }
   }
   
   return queue;
+}
+
+/**
+ * 选择最优的队列组合（考虑公平性和多样性）
+ * @param candidates 候选参与者
+ * @param allParticipants 所有参与者
+ * @param groupSize 组大小
+ * @returns 选中的参与者
+ */
+function selectOptimalQueueGroup(
+  candidates: Participant[], 
+  allParticipants: Participant[], 
+  groupSize: number
+): Participant[] {
+  if (candidates.length <= groupSize) {
+    return candidates.slice(0, groupSize);
+  }
+  
+  // 优先选择游戏次数少、休息轮数多的组合
+  const sortedCandidates = [...candidates].sort((a, b) => {
+    // 首先按游戏次数排序（少的优先）
+    if (a.gamesPlayed !== b.gamesPlayed) {
+      return a.gamesPlayed - b.gamesPlayed;
+    }
+    // 然后按休息轮数排序（多的优先）
+    if (a.restRounds !== b.restRounds) {
+      return b.restRounds - a.restRounds;
+    }
+    return Math.random() - 0.5;
+  });
+  
+  return sortedCandidates.slice(0, groupSize);
 }
 
 /**
@@ -691,224 +755,6 @@ function updateOpponentStats(participants: Participant[], player1Id: string, pla
 }
 
 /**
- * 智能补充等待队列，确保始终保持2组等待
- * 新策略：动态重组，确保多样性和公平轮换
- * @param session 游戏会话
- * @param targetQueueSize 目标等待队列大小（默认2组）
- * @returns 是否成功补充
- */
-export function maintainQueueSize(
-  session: any,
-  targetQueueSize: number = 2
-): boolean {
-  const currentQueueSize = session.queue.length;
-  
-  if (currentQueueSize >= targetQueueSize) {
-    return true; // 队列已满足要求
-  }
-  
-  const neededMatches = targetQueueSize - currentQueueSize;
-  
-  // 新策略：动态重组等待队列
-  // 1. 将当前等待队列中的人重新放回休息池
-  const currentQueuedPlayers: string[] = [];
-  for (const match of session.queue) {
-    currentQueuedPlayers.push(
-      match.team1.player1,
-      match.team1.player2,
-      match.team2.player1,
-      match.team2.player2
-    );
-  }
-  
-  // 2. 将这些人的状态改为resting，重新参与选择
-  for (const participant of session.participants) {
-    if (currentQueuedPlayers.includes(participant.id)) {
-      participant.status = 'resting';
-    }
-  }
-  
-  // 3. 清空当前等待队列，重新生成
-  session.queue = [];
-  
-  // 4. 获取所有可用于等待队列的参与者（休息中的）
-  const availableParticipants = session.participants
-    .filter((p: any) => p.status === 'resting')
-    .sort((a: any, b: any) => {
-      // 首先按游戏次数排序（少的优先）
-      if (a.gamesPlayed !== b.gamesPlayed) {
-        return a.gamesPlayed - b.gamesPlayed;
-      }
-      // 然后按休息轮数排序（多的优先）
-      if (a.restRounds !== b.restRounds) {
-        return b.restRounds - a.restRounds;
-      }
-      // 最后随机排序
-      return Math.random() - 0.5;
-    });
-  
-  const totalNeededPlayers = targetQueueSize * 4;
-  
-  if (availableParticipants.length < totalNeededPlayers) {
-    // 如果人数不够，尝试生成能生成的组数
-    const possibleMatches = Math.floor(availableParticipants.length / 4);
-    if (possibleMatches === 0) {
-      return false;
-    }
-    return generateOptimalQueueMatches(session, availableParticipants, possibleMatches);
-  }
-  
-  // 5. 生成最优的等待队列组合
-  return generateOptimalQueueMatches(session, availableParticipants, targetQueueSize);
-}
-
-/**
- * 生成最优的等待队列组合，确保多样性
- * @param session 游戏会话
- * @param availablePlayers 可用玩家
- * @param targetMatches 目标组数
- * @returns 是否成功生成
- */
-function generateOptimalQueueMatches(
-  session: any,
-  availablePlayers: any[],
-  targetMatches: number
-): boolean {
-  if (availablePlayers.length < targetMatches * 4) {
-    return false;
-  }
-  
-  // 使用贪心算法生成多样性最好的组合
-  const usedPlayers = new Set<string>();
-  let generatedMatches = 0;
-  
-  while (generatedMatches < targetMatches && availablePlayers.length - usedPlayers.size >= 4) {
-    // 从未使用的玩家中选择4人
-    const unusedPlayers = availablePlayers.filter(p => !usedPlayers.has(p.id));
-    
-    if (unusedPlayers.length < 4) break;
-    
-    // 选择多样性最好的4人组合
-    const selectedPlayers = selectMostDiverseGroup(unusedPlayers, session.participants);
-    
-    if (selectedPlayers.length === 4) {
-      // 为这4个玩家生成最优队伍组合
-      const bestMatch = findBestTeamMatch(selectedPlayers, session.weights, session.participants);
-      
-      if (bestMatch) {
-        // 添加到等待队列
-        session.queue.push(bestMatch);
-        
-        // 更新这些玩家的状态为queued
-        const queuedPlayerIds = [
-          bestMatch.team1.player1,
-          bestMatch.team1.player2,
-          bestMatch.team2.player1,
-          bestMatch.team2.player2
-        ];
-        
-        for (const participant of session.participants) {
-          if (queuedPlayerIds.includes(participant.id)) {
-            participant.status = 'queued';
-          }
-        }
-        
-        // 标记这些玩家为已使用
-        queuedPlayerIds.forEach(id => usedPlayers.add(id));
-        generatedMatches++;
-      } else {
-        break;
-      }
-    } else {
-      break;
-    }
-  }
-  
-  return generatedMatches > 0;
-}
-
-/**
- * 选择多样性最好的4人组合
- * 优先选择之前很少一起比赛的人
- * @param players 可选玩家
- * @param allParticipants 所有参与者
- * @returns 选中的4人
- */
-function selectMostDiverseGroup(players: any[], allParticipants: any[]): any[] {
-  if (players.length <= 4) {
-    return players.slice(0, 4);
-  }
-  
-  // 计算每个4人组合的多样性分数
-  let bestGroup: any[] = [];
-  let bestDiversityScore = -Infinity;
-  
-  // 生成所有可能的4人组合
-  const fourPlayerCombinations = getCombinations(players, 4);
-  
-  for (const group of fourPlayerCombinations) {
-    const diversityScore = calculateGroupDiversityScore(group, allParticipants);
-    
-    if (diversityScore > bestDiversityScore) {
-      bestDiversityScore = diversityScore;
-      bestGroup = group;
-    }
-  }
-  
-  return bestGroup;
-}
-
-/**
- * 计算4人组合的多样性分数
- * 分数越高表示这4人之前一起比赛的次数越少
- * @param group 4人组合
- * @param allParticipants 所有参与者
- * @returns 多样性分数
- */
-function calculateGroupDiversityScore(group: any[], allParticipants: any[]): number {
-  if (group.length !== 4) return -Infinity;
-  
-  let diversityScore = 0;
-  const playerStats = allParticipants.reduce((acc: any, p: any) => {
-    acc[p.id] = p;
-    return acc;
-  }, {});
-  
-  // 计算这4人之间的历史交互次数
-  for (let i = 0; i < group.length; i++) {
-    for (let j = i + 1; j < group.length; j++) {
-      const player1 = playerStats[group[i].id];
-      const player2 = playerStats[group[j].id];
-      
-      if (player1 && player2) {
-        // 队友次数（负分，因为我们希望减少重复）
-        const teammateCount = player1.teammates[player2.id] || 0;
-        diversityScore -= teammateCount * 2;
-        
-        // 对手次数（负分，但权重较小）
-        const opponentCount = player1.opponents[player2.id] || 0;
-        diversityScore -= opponentCount * 1;
-      }
-    }
-  }
-  
-  // 加上公平性分数（游戏次数相近的组合得分更高）
-  const gamesPlayed = group.map(p => p.gamesPlayed);
-  const mean = gamesPlayed.reduce((sum, games) => sum + games, 0) / gamesPlayed.length;
-  const variance = gamesPlayed.reduce((sum, games) => sum + Math.pow(games - mean, 2), 0) / gamesPlayed.length;
-  const fairnessBonus = Math.max(0, 10 - Math.sqrt(variance));
-  
-  diversityScore += fairnessBonus;
-  
-  // 加上休息轮数奖励（休息久的人优先）
-  const restRounds = group.map(p => p.restRounds);
-  const avgRestRounds = restRounds.reduce((sum, rounds) => sum + rounds, 0) / restRounds.length;
-  diversityScore += avgRestRounds * 0.5;
-  
-  return diversityScore;
-}
-
-/**
  * 当比赛结束后，自动维护等待队列
  * @param session 游戏会话
  */
@@ -921,12 +767,71 @@ export function autoMaintainQueue(session: any): void {
     }
   }
   
-  // 尝试维护等待队列大小
-  maintainQueueSize(session, 2);
+  // 使用新的通用队列生成逻辑
+  regenerateQueueWithSupplement(session);
+}
+
+/**
+ * 重新生成等待队列，确保始终有两组，必要时从当前比赛者中补充
+ * @param session 游戏会话
+ */
+function regenerateQueueWithSupplement(session: any): void {
+  // 获取当前比赛的参与者
+  const playingPlayers: any[] = [];
+  for (const court of session.courts) {
+    if (court.team1 && court.team2 && court.status === 'playing') {
+      const courtPlayers = [
+        court.team1.player1, court.team1.player2,
+        court.team2.player1, court.team2.player2
+      ];
+      for (const playerId of courtPlayers) {
+        const player = session.participants.find((p: any) => p.id === playerId);
+        if (player) {
+          playingPlayers.push(player);
+        }
+      }
+    }
+  }
   
-  // 如果仍然无法维护2组等待，尝试生成1组
-  if (session.queue.length < 1) {
-    maintainQueueSize(session, 1);
+  // 获取休息中的参与者
+  const restingPlayers = session.participants.filter((p: any) => 
+    p.status === 'resting' && !p.hasLeft
+  );
+  
+  // 清空当前队列，重新生成
+  session.queue = [];
+  
+  // 重置所有排队状态为休息状态
+  for (const participant of session.participants) {
+    if (participant.status === 'queued') {
+      participant.status = 'resting';
+    }
+  }
+  
+  // 使用新的队列生成逻辑
+  const newQueue = generateQueueWithSupplement(
+    restingPlayers,
+    playingPlayers,
+    session.settings.courtCount,
+    session.weights || [],
+    session.participants
+  );
+  
+  // 更新会话队列
+  session.queue = newQueue;
+  
+  // 更新参与者状态：设置排队的人为queued状态
+  for (const match of session.queue) {
+    const queuedPlayerIds = [
+      match.team1.player1, match.team1.player2,
+      match.team2.player1, match.team2.player2
+    ];
+    
+    for (const participant of session.participants) {
+      if (queuedPlayerIds.includes(participant.id) && participant.status === 'resting') {
+        participant.status = 'queued';
+      }
+    }
   }
 }
 
