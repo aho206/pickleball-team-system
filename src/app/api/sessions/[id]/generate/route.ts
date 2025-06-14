@@ -9,25 +9,25 @@ import { getGameSession, saveGameSession } from '@/lib/memory-store';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<ApiResponse<GameSession>>> {
   try {
-    const { sessionId } = params;
+    const sessionId = params.id;
 
     if (!sessionId) {
       return NextResponse.json({
         success: false,
-        error: '缺少会话ID'
+        error: '球局ID不能为空'
       }, { status: 400 });
     }
 
-    // 从内存存储获取会话数据
+    // 从内存存储获取球局数据
     const session = await getGameSession(sessionId);
     
     if (!session) {
       return NextResponse.json({
         success: false,
-        error: '会话不存在'
+        error: '球局不存在'
       }, { status: 404 });
     }
 
@@ -38,7 +38,7 @@ export async function POST(
       session.weights
     );
 
-    // 更新会话数据
+    // 更新球局数据
     session.courts = assignment.courts;
     session.queue = assignment.queue;
     session.stats.currentRound += 1;

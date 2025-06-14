@@ -13,13 +13,13 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<ApiResponse<Weight>>> {
   try {
     // 暂时跳过认证验证，专注于功能测试
     // TODO: 生产环境需要恢复认证
     
-    const sessionId = params.sessionId;
+    const sessionId = params.id;
     const body = await request.json();
     const { player1, player2, weight, type } = body;
 
@@ -52,12 +52,12 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // 获取会话
+    // 获取球局
     const session = await getGameSession(sessionId);
     if (!session) {
       return NextResponse.json({
         success: false,
-        error: '会话不存在'
+        error: '球局不存在'
       }, { status: 404 });
     }
 
@@ -96,11 +96,11 @@ export async function POST(
       createdAt: new Date()
     };
 
-    // 添加到会话
+    // 添加到球局
     session.weights.push(newWeight);
     session.updatedAt = new Date();
 
-    // 保存会话 - 修复：传递createdBy参数确保保存到数据库
+    // 保存球局 - 修复：传递createdBy参数确保保存到数据库
     await saveGameSession(session, session.createdBy);
 
     return NextResponse.json({
@@ -123,13 +123,13 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
     // 暂时跳过认证验证，专注于功能测试
     // TODO: 生产环境需要恢复认证
 
-    const sessionId = params.sessionId;
+    const sessionId = params.id;
     const { searchParams } = new URL(request.url);
     const weightId = searchParams.get('weightId');
 
@@ -140,12 +140,12 @@ export async function DELETE(
       }, { status: 400 });
     }
 
-    // 获取会话
+    // 获取球局
     const session = await getGameSession(sessionId);
     if (!session) {
       return NextResponse.json({
         success: false,
-        error: '会话不存在'
+        error: '球局不存在'
       }, { status: 404 });
     }
 
@@ -162,7 +162,7 @@ export async function DELETE(
     session.weights.splice(weightIndex, 1);
     session.updatedAt = new Date();
 
-    // 保存会话 - 修复：传递createdBy参数确保保存到数据库
+    // 保存球局 - 修复：传递createdBy参数确保保存到数据库
     await saveGameSession(session, session.createdBy);
 
     return NextResponse.json({
