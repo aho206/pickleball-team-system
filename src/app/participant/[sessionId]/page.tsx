@@ -23,7 +23,7 @@ export default function ParticipantPage() {
   const loadSession = async () => {
     try {
       if (loading) setLoading(true)
-      console.log('正在加载会话:', sessionId)
+      console.log('正在加载球局:', sessionId)
       const response = await fetch(`/api/sessions?id=${sessionId}`)
       const data = await response.json()
       console.log('API响应:', data)
@@ -32,8 +32,8 @@ export default function ParticipantPage() {
         setSession(data.data)
         setError(null)
       } else {
-        console.error('加载会话失败:', data.error)
-        setError(data.error || '加载会话失败')
+        console.error('加载球局失败:', data.error)
+        setError(data.error || '加载球局失败')
       }
     } catch (err) {
       console.error('网络错误:', err)
@@ -60,7 +60,7 @@ export default function ParticipantPage() {
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-red-500 text-xl mb-4">❌</div>
           <p className="text-gray-600 mb-2">{error}</p>
-          <p className="text-sm text-gray-500 mb-4">会话ID: {sessionId}</p>
+          <p className="text-sm text-gray-500 mb-4">球局编号: {sessionId}</p>
           <div className="space-y-2">
             <button
               onClick={loadSession}
@@ -72,7 +72,7 @@ export default function ParticipantPage() {
               href="/"
               className="block bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center"
             >
-              创建新会话
+              创建新球局
             </a>
           </div>
         </div>
@@ -85,8 +85,8 @@ export default function ParticipantPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-gray-500 text-xl mb-4">🔍</div>
-          <p className="text-gray-600 mb-2">会话不存在</p>
-          <p className="text-sm text-gray-500 mb-4">会话ID: {sessionId}</p>
+          <p className="text-gray-600 mb-2">球局不存在</p>
+          <p className="text-sm text-gray-500 mb-4">球局编号: {sessionId}</p>
           <div className="space-y-2">
             <button
               onClick={loadSession}
@@ -98,7 +98,7 @@ export default function ParticipantPage() {
               href="/"
               className="block bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center"
             >
-              创建新会话
+              创建新球局
             </a>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function ParticipantPage() {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">🏓 匹克球组队</h1>
-            <p className="text-gray-600">会话ID: {sessionId}</p>
+            <p className="text-gray-600">球局编号: {sessionId}</p>
             <div className="text-sm text-gray-500 mt-2">
               第 {session.stats.currentRound} 轮 | 总比赛 {session.stats.totalGamesPlayed} 场
             </div>

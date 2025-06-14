@@ -10,7 +10,7 @@ export default function HomePage() {
 
   const handleJoinSession = () => {
     if (!sessionId.trim()) {
-      alert('请输入会话ID')
+      alert('请输入球局编号')
       return
     }
     router.push(`/session/${sessionId}`)
@@ -43,29 +43,29 @@ export default function HomePage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-pickleball-800 mb-4">
-            欢迎参与匹克球比赛
+            一起来打匹克球吧
           </h1>
           <p className="text-lg text-pickleball-600">
-            输入会话ID查看实时比赛状况和轮次安排
+            输入球局编号查看实时比赛状况和轮次安排
           </p>
         </div>
 
         <div className="max-w-md mx-auto">
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-              进入比赛会话
+              加入球局
             </h2>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  会话ID
+                  球局编号
                 </label>
                 <input
                   type="text"
                   value={sessionId}
                   onChange={(e) => setSessionId(e.target.value)}
-                  placeholder="输入会话ID (例如: abc123)"
+                  placeholder="输入球局编号 (例如: abc123)"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pickleball-500 focus:border-transparent text-lg"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
@@ -80,7 +80,7 @@ export default function HomePage() {
                 disabled={!sessionId.trim()}
                 className="w-full bg-pickleball-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-pickleball-700 focus:ring-2 focus:ring-pickleball-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-lg"
               >
-                进入会话
+                加入球局
               </button>
             </div>
 
@@ -88,7 +88,7 @@ export default function HomePage() {
               <div className="text-center text-sm text-gray-600">
                 <p className="mb-2">管理员功能：</p>
                 <ul className="space-y-1">
-                  <li>• 创建新的比赛会话</li>
+                  <li>• 创建新的球局</li>
                   <li>• 管理参与者和场地</li>
                   <li>• 设置权重和偏好</li>
                 </ul>

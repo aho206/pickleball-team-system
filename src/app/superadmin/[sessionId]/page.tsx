@@ -58,21 +58,16 @@ export default function SuperAdminPage() {
   const loadSession = async () => {
     try {
       setLoading(true)
-      console.log('🔄 加载会话数据:', sessionId);
-      
       const response = await fetch(`/api/sessions?id=${sessionId}`)
       const data = await response.json()
       
       if (data.success) {
-        console.log('✅ 会话数据加载成功:', data.data);
-        console.log('📊 权重数据:', data.data.weights);
         setSession(data.data)
+        setError(null)
       } else {
-        console.error('❌ 加载会话失败:', data.error);
-        setError(data.error || '加载会话失败')
+        setError(data.error || '加载球局失败')
       }
     } catch (err) {
-      console.error('❌ 网络错误:', err);
       setError('网络错误，请重试')
     } finally {
       setLoading(false)
@@ -174,15 +169,24 @@ export default function SuperAdminPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto p-6">
           <div className="text-red-500 text-xl mb-4">❌</div>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={loadSession}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-          >
-            重试
-          </button>
+          <p className="text-gray-600 mb-2">{error}</p>
+          <p className="text-sm text-gray-500 mb-4">球局编号: {sessionId}</p>
+          <div className="space-y-2">
+            <button
+              onClick={loadSession}
+              className="bg-pickleball-600 text-white px-4 py-2 rounded-lg hover:bg-pickleball-700 w-full"
+            >
+              重试
+            </button>
+            <a
+              href="/dashboard"
+              className="block bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center"
+            >
+              返回仪表板
+            </a>
+          </div>
         </div>
       </div>
     )
@@ -191,8 +195,24 @@ export default function SuperAdminPage() {
   if (!session) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">会话不存在</p>
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="text-gray-500 text-xl mb-4">🔍</div>
+          <p className="text-gray-600 mb-2">球局不存在</p>
+          <p className="text-sm text-gray-500 mb-4">球局编号: {sessionId}</p>
+          <div className="space-y-2">
+            <button
+              onClick={loadSession}
+              className="bg-pickleball-600 text-white px-4 py-2 rounded-lg hover:bg-pickleball-700 w-full"
+            >
+              重新加载
+            </button>
+            <a
+              href="/dashboard"
+              className="block bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center"
+            >
+              返回仪表板
+            </a>
+          </div>
         </div>
       </div>
     )
@@ -212,9 +232,16 @@ export default function SuperAdminPage() {
       <div className="container mx-auto px-4 py-8">
         {/* 头部信息 */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">⚙️ 权重设置</h1>
+            <p className="text-gray-600">球局编号: {sessionId}</p>
+            <div className="text-sm text-gray-500 mt-2">
+              第 {session.stats.currentRound} 轮 | 总比赛 {session.stats.totalGamesPlayed} 场
+            </div>
+          </div>
+          
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-purple-800">超级管理员控制台</h1>
               <p className="text-gray-600">会话ID: {sessionId}</p>
             </div>
             <div className="flex items-center space-x-4">

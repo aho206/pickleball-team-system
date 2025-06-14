@@ -30,7 +30,7 @@ export default function DashboardPage() {
 
   const loadDashboardData = async () => {
     try {
-      // 加载用户会话列表
+      // 加载用户球局列表
       const sessionsResponse = await fetch('/api/sessions/my');
       const sessionsData = await sessionsResponse.json();
       if (sessionsData.success) {
@@ -108,14 +108,14 @@ export default function DashboardPage() {
       // 尝试使用Web Share API
       if (navigator.share) {
         await navigator.share({
-          title: '匹克球比赛会话',
-          text: `加入匹克球比赛会话: ${sessionId}`,
+          title: '匹克球球局',
+          text: `加入匹克球球局: ${sessionId}`,
           url: sessionUrl,
         });
       } else {
         // 回退到复制到剪贴板
         await navigator.clipboard.writeText(sessionUrl);
-        alert(`会话链接已复制到剪贴板:\n${sessionUrl}`);
+        alert(`球局链接已复制到剪贴板:\n${sessionUrl}`);
       }
     } catch (error) {
       // 如果都失败了，显示链接让用户手动复制
@@ -127,8 +127,8 @@ export default function DashboardPage() {
     try {
       // 准备导出数据
       const exportData = {
-        会话信息: {
-          会话ID: session.id,
+        球局信息: {
+          球局编号: session.id,
           创建时间: session.createdAt,
           参与者数量: session.participants.length,
           场地数量: session.settings.courtCount,
@@ -177,7 +177,7 @@ export default function DashboardPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `匹克球会话_${session.id}_${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `匹克球球局_${session.id}_${new Date().toISOString().split('T')[0]}.json`;
       
       // 触发下载
       document.body.appendChild(link);
@@ -191,7 +191,7 @@ export default function DashboardPage() {
   };
 
   const deleteSession = async (sessionId: string) => {
-    if (!confirm('确定要删除这个会话吗？此操作不可撤销，所有相关数据将被永久删除。')) {
+    if (!confirm('确定要删除这个球局吗？此操作不可撤销，所有相关数据将被永久删除。')) {
       return;
     }
 
@@ -202,14 +202,14 @@ export default function DashboardPage() {
 
       const data = await response.json();
       if (data.success) {
-        // 重新加载会话列表
+        // 重新加载球局列表
         await loadDashboardData();
-        alert('会话删除成功！');
+        alert('球局删除成功！');
       } else {
         alert(data.error || '删除失败');
       }
     } catch (error) {
-      console.error('删除会话失败:', error);
+      console.error('删除球局失败:', error);
       alert('网络错误，请重试');
     }
   };
@@ -260,7 +260,7 @@ export default function DashboardPage() {
               onClick={() => setShowCreateSession(true)}
               className="bg-pickleball-600 text-white px-4 py-2 rounded-lg hover:bg-pickleball-700 transition-colors"
             >
-              创建会话
+              创建球局
             </button>
             {isSuperAdmin && (
               <>
@@ -326,7 +326,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="ml-4">
-                    <div className="text-sm font-medium text-gray-500">活跃会话</div>
+                    <div className="text-sm font-medium text-gray-500">活跃球局</div>
                     <div className="text-2xl font-bold text-gray-900">{sessions.length}</div>
                   </div>
                 </div>
@@ -351,13 +351,13 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* 我的会话 */}
+        {/* 我的球局 */}
         <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">我的会话</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-4">我的球局</h2>
           <div className="bg-white rounded-lg shadow">
             {sessions.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
-                暂无活跃会话
+                暂无活跃球局
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
@@ -366,7 +366,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          会话 {session.id}
+                          球局 {session.id}
                         </h3>
                         <p className="text-sm text-gray-600">
                           {session.participants.length} 参与者 • {session.settings.courtCount} 场地
@@ -498,7 +498,7 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* 创建会话模态框 */}
+      {/* 创建球局模态框 */}
       {showCreateSession && (
         <CreateSessionModal 
           onClose={() => setShowCreateSession(false)}
@@ -622,7 +622,7 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
   );
 }
 
-// 创建会话模态框组件
+// 创建球局模态框组件
 function CreateSessionModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (sessionId: string) => void }) {
   const [participantNames, setParticipantNames] = useState('');
   const [courtCount, setCourtCount] = useState(2);
@@ -662,7 +662,7 @@ function CreateSessionModal({ onClose, onSuccess }: { onClose: () => void; onSuc
       if (data.success) {
         onSuccess(data.data.id);
       } else {
-        setError(data.error || '创建会话失败');
+        setError(data.error || '创建球局失败');
       }
     } catch (error) {
       setError('网络错误，请重试');
@@ -674,7 +674,7 @@ function CreateSessionModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">创建新会话</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">创建新球局</h3>
         
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
@@ -720,14 +720,14 @@ function CreateSessionModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                 onChange={(e) => setUseCustomId(e.target.checked)}
                 className="rounded border-gray-300 text-pickleball-600 focus:ring-pickleball-500"
               />
-              <span className="text-sm font-medium text-gray-700">使用自定义会话ID</span>
+              <span className="text-sm font-medium text-gray-700">使用自定义球局ID</span>
             </label>
           </div>
 
           {useCustomId && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                自定义会话ID
+                自定义球局ID
               </label>
               <input
                 type="text"

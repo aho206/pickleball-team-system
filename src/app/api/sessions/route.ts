@@ -48,7 +48,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (!participantNames || !Array.isArray(participantNames) || participantNames.length < 4) {
       return NextResponse.json({
         success: false,
-        error: '至少需要4名参与者'
+        error: '至少需要4个参与者'
       }, { status: 400 });
     }
 
@@ -193,7 +193,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     if (!sessionId) {
       return NextResponse.json({
         success: false,
-        error: '缺少会话ID'
+        error: '球局ID不能为空'
       }, { status: 400 });
     }
 
@@ -203,18 +203,18 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     if (!session) {
       return NextResponse.json({
         success: false,
-        error: '会话不存在'
+        error: '球局不存在'
       }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
       data: session,
-      message: '获取会话成功'
+      message: '获取球局成功'
     });
 
   } catch (error) {
-    console.error('获取会话失败:', error);
+    console.error('获取球局失败:', error);
     return NextResponse.json({
       success: false,
       error: '服务器内部错误'
@@ -233,7 +233,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
     if (!sessionId) {
       return NextResponse.json({
         success: false,
-        error: '缺少会话ID'
+        error: '球局ID不能为空'
       }, { status: 400 });
     }
 
