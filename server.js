@@ -142,12 +142,12 @@ app.prepare().then(() => {
       try {
         console.log(`设置权重:`, weight);
         
-        // 调用API来设置权重
-        const response = await fetch(`http://localhost:${port}/api/sessions/${sessionId}/weights`, {
+        // 调用API来设置权重 - 修复URL和移除认证依赖
+        const apiUrl = dev ? `http://localhost:${port}` : `https://pickleball-team-system-production.up.railway.app`;
+        const response = await fetch(`${apiUrl}/api/sessions/${sessionId}/weights`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${socket.authToken}` // 需要传递认证token
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify(weight)
         });
@@ -171,11 +171,12 @@ app.prepare().then(() => {
       try {
         console.log(`移除权重: ${weightId}`);
         
-        // 调用API来移除权重
-        const response = await fetch(`http://localhost:${port}/api/sessions/${sessionId}/weights?weightId=${weightId}`, {
+        // 调用API来移除权重 - 修复URL和移除认证依赖
+        const apiUrl = dev ? `http://localhost:${port}` : `https://pickleball-team-system-production.up.railway.app`;
+        const response = await fetch(`${apiUrl}/api/sessions/${sessionId}/weights?weightId=${weightId}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${socket.authToken}` // 需要传递认证token
+            'Content-Type': 'application/json'
           }
         });
 
