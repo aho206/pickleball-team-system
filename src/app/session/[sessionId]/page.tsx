@@ -275,9 +275,6 @@ export default function SessionPage() {
                   <div className="text-sm text-gray-600">
                     比赛场数: {participant.gamesPlayed}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    休息轮数: {participant.restRounds}
-                  </div>
                 </div>
               ))}
             </div>
