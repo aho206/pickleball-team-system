@@ -72,7 +72,8 @@ app.prepare().then(() => {
           teammates: {},
           opponents: {},
           status: 'resting',
-          joinedAt: new Date()
+          joinedAt: new Date(),
+          hasLeft: false
         });
       } catch (error) {
         socket.emit('error', '添加参与者失败');

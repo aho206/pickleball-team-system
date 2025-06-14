@@ -27,7 +27,8 @@ export default function TestPage() {
       teammates: {},
       opponents: {},
       status: 'resting' as const,
-      joinedAt: new Date()
+      joinedAt: new Date(),
+      hasLeft: false  // 添加缺少的hasLeft属性
     }))
 
     setParticipants(testParticipants)
