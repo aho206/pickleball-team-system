@@ -104,30 +104,30 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto mt-16">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="bg-white rounded-lg p-6 shadow-md">
+              <div className="bg-white rounded-lg p-6 shadow-md h-full flex flex-col">
                 <div className="text-3xl mb-4">⚖️</div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">公平轮换</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-gray-600 text-sm flex-1">
                   智能算法确保每个人都有相等的比赛机会
                 </p>
               </div>
             </div>
             
             <div className="text-center">
-              <div className="bg-white rounded-lg p-6 shadow-md">
+              <div className="bg-white rounded-lg p-6 shadow-md h-full flex flex-col">
                 <div className="text-3xl mb-4">🔄</div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">多样配对</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-gray-600 text-sm flex-1">
                   避免重复组合，让你与不同的人配对
                 </p>
               </div>
             </div>
             
             <div className="text-center">
-              <div className="bg-white rounded-lg p-6 shadow-md">
+              <div className="bg-white rounded-lg p-6 shadow-md h-full flex flex-col">
                 <div className="text-3xl mb-4">📱</div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">实时更新</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-gray-600 text-sm flex-1">
                   实时查看比赛状况和下一轮安排
                 </p>
               </div>
