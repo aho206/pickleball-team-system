@@ -43,8 +43,11 @@ export async function GET(request: NextRequest) {
         created_at: row.created_at,
         updated_at: row.updated_at,
         dataType: typeof row.data,
-        dataLength: row.data ? row.data.length : 0,
-        dataPreview: row.data ? row.data.substring(0, 200) : null
+        dataIsObject: typeof row.data === 'object',
+        dataKeys: typeof row.data === 'object' ? Object.keys(row.data || {}) : null,
+        dataPreview: typeof row.data === 'object' 
+          ? JSON.stringify(row.data).substring(0, 200)
+          : (row.data ? row.data.substring(0, 200) : null)
       })),
       parsedData: []
     };
@@ -52,7 +55,8 @@ export async function GET(request: NextRequest) {
     // 尝试解析每个数据
     for (const row of rawResult.rows) {
       try {
-        const parsed = JSON.parse(row.data);
+        // PostgreSQL JSONB字段已经是对象，不需要JSON.parse
+        const parsed = typeof row.data === 'object' ? row.data : JSON.parse(row.data);
         results.parsedData.push({
           id: row.id,
           success: true,

@@ -419,7 +419,11 @@ export async function getGameSessionFromDB(sessionId: string): Promise<GameSessi
     
     if (result.rows.length === 0) return null;
     
-    const session = JSON.parse(result.rows[0].data);
+    // PostgreSQL JSONB字段已经是对象，不需要JSON.parse
+    const session = typeof result.rows[0].data === 'object' 
+      ? result.rows[0].data 
+      : JSON.parse(result.rows[0].data);
+    
     // 确保createdBy字段正确设置
     session.createdBy = result.rows[0].created_by;
     return session;
@@ -443,7 +447,8 @@ export async function getUserSessions(userId: string): Promise<GameSession[]> {
     `, [userId]);
     
     return result.rows.map(row => {
-      const session = JSON.parse(row.data);
+      // PostgreSQL JSONB字段已经是对象，不需要JSON.parse
+      const session = typeof row.data === 'object' ? row.data : JSON.parse(row.data);
       // 确保createdBy字段正确设置
       session.createdBy = row.created_by;
       return session;
@@ -467,7 +472,8 @@ export async function getAllSessions(): Promise<GameSession[]> {
     `);
     
     return result.rows.map(row => {
-      const session = JSON.parse(row.data);
+      // PostgreSQL JSONB字段已经是对象，不需要JSON.parse
+      const session = typeof row.data === 'object' ? row.data : JSON.parse(row.data);
       // 确保createdBy字段正确设置
       session.createdBy = row.created_by;
       return session;
