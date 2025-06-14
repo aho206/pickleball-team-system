@@ -1,0 +1,45 @@
+{
+  "name": "pickleball-team-system",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "server": "node server.js"
+  },
+  "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/uuid": "^9.0.7",
+    "autoprefixer": "^10.0.1",
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^11.10.0",
+    "clsx": "^2.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.294.0",
+    "next": "14.0.4",
+    "node-fetch": "^2.7.0",
+    "postcss": "^8",
+    "react": "^18",
+    "react-dom": "^18",
+    "redis": "^4.6.10",
+    "socket.io": "^4.7.4",
+    "socket.io-client": "^4.7.4",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.4",
+    "prettier": "^3.0.0"
+  }
+}

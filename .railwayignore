@@ -1,0 +1,10 @@
+# Railway ignore file
+.git
+.gitignore
+README.md
+.env.local
+.env.example
+.next
+node_modules
+data/
+*.log 
