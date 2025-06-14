@@ -28,11 +28,11 @@ export async function GET(request: NextRequest) {
       const { getDatabase } = await import('@/lib/database-postgres');
       const database = getDatabase();
       
-      // 查询sessions表的所有数据
+      // 查询sessions表的所有数据 - 修复PostgreSQL语法
       const sessionsResult = await database.query(`
         SELECT id, created_by, created_at, updated_at, 
-               LENGTH(data) as data_length,
-               SUBSTRING(data, 1, 200) as data_preview
+               LENGTH(data::text) as data_length,
+               SUBSTRING(data::text, 1, 200) as data_preview
         FROM sessions 
         ORDER BY created_at DESC
       `);
