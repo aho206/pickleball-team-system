@@ -16,7 +16,10 @@ export function useSocket(sessionId?: string, userRole?: UserRole) {
     if (!sessionId || !userRole) return;
 
     // 创建 Socket.io 连接
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 
+      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+    
+    const socket = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
 
