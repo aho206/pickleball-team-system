@@ -100,8 +100,8 @@ export async function POST(
     session.weights.push(newWeight);
     session.updatedAt = new Date();
 
-    // 保存会话
-    await saveGameSession(session);
+    // 保存会话 - 修复：传递createdBy参数确保保存到数据库
+    await saveGameSession(session, session.createdBy);
 
     return NextResponse.json({
       success: true,
@@ -162,8 +162,8 @@ export async function DELETE(
     session.weights.splice(weightIndex, 1);
     session.updatedAt = new Date();
 
-    // 保存会话
-    await saveGameSession(session);
+    // 保存会话 - 修复：传递createdBy参数确保保存到数据库
+    await saveGameSession(session, session.createdBy);
 
     return NextResponse.json({
       success: true,
