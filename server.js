@@ -3,6 +3,10 @@
  * 处理实时通信和会话管理
  */
 
+console.log('🚀 启动服务器...');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT);
+
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const next = require('next');
@@ -12,12 +16,22 @@ const dev = process.env.NODE_ENV !== 'production';
 const hostname = dev ? 'localhost' : '0.0.0.0'; // 生产环境绑定到所有接口
 const port = process.env.PORT || 3000;
 
+console.log('🔧 配置信息:');
+console.log('- 开发模式:', dev);
+console.log('- 主机名:', hostname);
+console.log('- 端口:', port);
+
 // 初始化 Next.js 应用
+console.log('📦 初始化 Next.js 应用...');
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
+console.log('⏳ 准备 Next.js 应用...');
 app.prepare().then(() => {
+  console.log('✅ Next.js 应用准备完成');
+  
   const httpServer = createServer(handler);
+  console.log('🌐 HTTP 服务器创建完成');
   
   // 初始化 Socket.io
   const io = new Server(httpServer, {
@@ -26,6 +40,7 @@ app.prepare().then(() => {
       methods: ["GET", "POST"]
     }
   });
+  console.log('🔌 Socket.io 服务器初始化完成');
 
   // Socket.io 连接处理
   io.on('connection', (socket) => {
@@ -185,8 +200,19 @@ app.prepare().then(() => {
   });
 
   // 启动服务器
+  console.log('🚀 启动 HTTP 服务器...');
+  console.log(`📍 监听地址: ${hostname}:${port}`);
+  
   httpServer.listen(port, hostname, (err) => {
-    if (err) throw err;
-    console.log(`> Ready on http://${hostname}:${port}`);
+    if (err) {
+      console.error('❌ 服务器启动失败:', err);
+      throw err;
+    }
+    console.log(`✅ 服务器启动成功!`);
+    console.log(`🌍 访问地址: http://${hostname}:${port}`);
+    console.log(`🔧 环境: ${process.env.NODE_ENV || 'development'}`);
   });
+}).catch(err => {
+  console.error('❌ Next.js 应用准备失败:', err);
+  process.exit(1);
 }); 
