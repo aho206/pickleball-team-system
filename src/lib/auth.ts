@@ -3,7 +3,13 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { getDatabase } from './database';
+import { 
+  saveAuthSession as saveAuthSessionToDB,
+  getAuthSession,
+  deleteAuthSession,
+  cleanupExpiredAuthSessions,
+  updateUserLastLogin
+} from './database';
 import { AuthSession, User } from './types';
 import { getUserById } from './user-store';
 
@@ -46,93 +52,71 @@ export function verifyToken(token: string): { userId: string; username: string; 
 /**
  * 保存认证会话到数据库
  */
-export function saveAuthSession(token: string, user: User): Promise<void> {
-  return new Promise((resolve, reject) => {
-    try {
-      const db = getDatabase();
-      
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + SESSION_EXPIRE_HOURS);
+export async function saveAuthSession(token: string, user: User): Promise<void> {
+  try {
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + SESSION_EXPIRE_HOURS);
 
-      const stmt = db.prepare(`
-        INSERT OR REPLACE INTO auth_sessions (token, user_id, username, role, expires_at)
-        VALUES (?, ?, ?, ?, ?)
-      `);
-
-      stmt.run(token, user.id, user.username, user.role, expiresAt.toISOString());
-      resolve();
-    } catch (error) {
-      reject(error);
-    }
-  });
+    await saveAuthSessionToDB(token, user.id, user.username, user.role, expiresAt);
+    
+    // 更新用户最后登录时间
+    await updateUserLastLogin(user.id);
+  } catch (error) {
+    console.error('[Auth] 保存认证会话失败:', error);
+    throw error;
+  }
 }
 
 /**
  * 验证认证会话
  */
-export function validateAuthSession(token: string): Promise<User | null> {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // 首先验证JWT token
-      const tokenData = verifyToken(token);
-      if (!tokenData) {
-        resolve(null);
-        return;
-      }
-
-      // 检查数据库中的会话
-      const db = getDatabase();
-      const stmt = db.prepare(`
-        SELECT user_id, expires_at 
-        FROM auth_sessions 
-        WHERE token = ? AND expires_at > CURRENT_TIMESTAMP
-      `);
-
-      const session = stmt.get(token) as any;
-      if (!session) {
-        resolve(null);
-        return;
-      }
-
-      // 获取用户信息
-      const user = await getUserById(session.user_id);
-      resolve(user);
-    } catch (error) {
-      reject(error);
+export async function validateAuthSession(token: string): Promise<User | null> {
+  try {
+    // 首先验证JWT token
+    const tokenData = verifyToken(token);
+    if (!tokenData) {
+      return null;
     }
-  });
+
+    // 检查数据库中的会话
+    const session = await getAuthSession(token);
+    if (!session) {
+      return null;
+    }
+
+    // 获取用户信息
+    const user = await getUserById(session.userId);
+    return user;
+  } catch (error) {
+    console.error('[Auth] 验证认证会话失败:', error);
+    return null;
+  }
 }
 
 /**
  * 删除认证会话（登出）
  */
-export function removeAuthSession(token: string): Promise<boolean> {
-  return new Promise((resolve, reject) => {
-    try {
-      const db = getDatabase();
-      const stmt = db.prepare('DELETE FROM auth_sessions WHERE token = ?');
-      const result = stmt.run(token);
-      resolve(result.changes > 0);
-    } catch (error) {
-      reject(error);
-    }
-  });
+export async function removeAuthSession(token: string): Promise<boolean> {
+  try {
+    await deleteAuthSession(token);
+    return true;
+  } catch (error) {
+    console.error('[Auth] 删除认证会话失败:', error);
+    return false;
+  }
 }
 
 /**
  * 清理过期的认证会话
  */
-export function cleanupExpiredSessions(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    try {
-      const db = getDatabase();
-      const stmt = db.prepare('DELETE FROM auth_sessions WHERE expires_at <= CURRENT_TIMESTAMP');
-      const result = stmt.run();
-      resolve(result.changes);
-    } catch (error) {
-      reject(error);
-    }
-  });
+export async function cleanupExpiredSessions(): Promise<number> {
+  try {
+    await cleanupExpiredAuthSessions();
+    return 0; // PostgreSQL版本不返回删除数量，SQLite版本会在控制台输出
+  } catch (error) {
+    console.error('[Auth] 清理过期会话失败:', error);
+    return 0;
+  }
 }
 
 /**

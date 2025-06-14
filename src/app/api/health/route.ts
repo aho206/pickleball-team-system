@@ -7,25 +7,24 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // 检查数据库连接
-    const { getDatabase } = await import('@/lib/database');
-    const db = getDatabase();
-    
-    // 简单的数据库查询测试
-    const result = db.prepare('SELECT 1 as test').get();
+    // 检查数据库连接 - 通过尝试获取超级管理员微信号来测试数据库
+    const { getSuperAdminWechatId } = await import('@/lib/database');
+    const wechatId = await getSuperAdminWechatId();
     
     return NextResponse.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      database: result ? 'connected' : 'disconnected',
-      environment: process.env.NODE_ENV || 'development'
+      database: wechatId ? 'connected' : 'disconnected',
+      environment: process.env.NODE_ENV || 'development',
+      databaseType: process.env.DATABASE_URL && process.env.NODE_ENV === 'production' ? 'PostgreSQL' : 'SQLite'
     });
   } catch (error) {
     console.error('Health check failed:', error);
     return NextResponse.json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      databaseType: process.env.DATABASE_URL && process.env.NODE_ENV === 'production' ? 'PostgreSQL' : 'SQLite'
     }, { status: 500 });
   }
 } 

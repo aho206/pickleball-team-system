@@ -12,7 +12,7 @@ import { validateAuthSession } from '@/lib/auth';
  */
 export async function GET(): Promise<NextResponse<ApiResponse<{ wechatId: string }>>> {
   try {
-    const wechatId = getSuperAdminWechatId();
+    const wechatId = await getSuperAdminWechatId();
     
     return NextResponse.json({
       success: true,
@@ -79,7 +79,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse<ApiRespons
     }
 
     // 更新微信号
-    const success = updateSuperAdminWechatId(currentUser.id, wechatId);
+    const success = await updateSuperAdminWechatId(currentUser.id, wechatId);
     
     if (!success) {
       return NextResponse.json({
