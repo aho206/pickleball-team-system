@@ -11,6 +11,33 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 移动端优化 */
+@media (max-width: 768px) {
+  /* 确保按钮有足够的触摸区域 */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* 优化表格在移动端的显示 */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* 优化卡片间距 */
+  .card-mobile {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+  
+  /* 优化文字大小 */
+  .text-mobile {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}
+
 /* 匹克球主题色彩 */
 .bg-court {
   background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
@@ -43,4 +70,47 @@ body {
 
 .card-shadow-lg {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* 移动端友好的滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 防止移动端双击缩放 */
+* {
+  touch-action: manipulation;
+}
+
+/* 优化输入框在移动端的显示 */
+input, textarea, select {
+  font-size: 16px; /* 防止iOS自动缩放 */
+}
+
+/* 移动端优化的网格布局 */
+@media (max-width: 640px) {
+  .grid-mobile-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .grid-mobile-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 } 

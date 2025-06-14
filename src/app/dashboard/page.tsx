@@ -255,10 +255,10 @@ export default function DashboardPage() {
         showHomeButton={true}
         showLogout={true}
         rightContent={
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-2 lg:space-y-0 lg:space-x-4 w-full lg:w-auto">
             <button
               onClick={() => setShowCreateSession(true)}
-              className="bg-pickleball-600 text-white px-4 py-2 rounded-lg hover:bg-pickleball-700 transition-colors"
+              className="bg-pickleball-600 text-white px-4 py-2 rounded-lg hover:bg-pickleball-700 transition-colors text-sm w-full lg:w-auto"
             >
               创建球局
             </button>
@@ -266,15 +266,15 @@ export default function DashboardPage() {
               <>
                 <button
                   onClick={() => setShowCreateUser(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm w-full lg:w-auto"
                 >
-                  创建管理员
+                  管理员
                 </button>
                 <button
                   onClick={() => setShowContactSettings(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm w-full lg:w-auto"
                 >
-                  联系信息
+                  系统信息
                 </button>
               </>
             )}
@@ -362,55 +362,57 @@ export default function DashboardPage() {
             ) : (
               <div className="divide-y divide-gray-200">
                 {sessions.map((session) => (
-                  <div key={session.id} className="p-6 hover:bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
+                  <div key={session.id} className="p-4 sm:p-6 hover:bg-gray-50">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-medium text-gray-900 truncate">
                           球局 {session.id}
                         </h3>
                         <p className="text-sm text-gray-600">
                           {session.participants.length} 参与者 • {session.settings.courtCount} 场地
                         </p>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
                         <button
                           onClick={() => router.push(`/admin/${session.id}`)}
-                          className="bg-pickleball-600 text-white px-3 py-1 rounded text-sm hover:bg-pickleball-700"
+                          className="bg-pickleball-600 text-white px-3 py-2 rounded text-sm hover:bg-pickleball-700 transition-colors"
                         >
                           管理
                         </button>
                         {isSuperAdmin && (
                           <button
                             onClick={() => router.push(`/superadmin/${session.id}`)}
-                            className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
+                            className="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700 transition-colors"
                           >
                             权重设置
                           </button>
                         )}
                         <button
                           onClick={() => router.push(`/session/${session.id}`)}
-                          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+                          className="bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors"
                         >
                           查看
                         </button>
-                        <button
-                          onClick={() => shareSession(session.id)}
-                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                        >
-                          分享
-                        </button>
-                        <button
-                          onClick={() => exportSessionData(session)}
-                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-                        >
-                          导出
-                        </button>
-                        <button
-                          onClick={() => deleteSession(session.id)}
-                          className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-                        >
-                          删除
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => shareSession(session.id)}
+                            className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors flex-1"
+                          >
+                            分享
+                          </button>
+                          <button
+                            onClick={() => exportSessionData(session)}
+                            className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors flex-1"
+                          >
+                            导出
+                          </button>
+                          <button
+                            onClick={() => deleteSession(session.id)}
+                            className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition-colors flex-1"
+                          >
+                            删除
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
