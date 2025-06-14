@@ -158,6 +158,7 @@ export interface User {
   username: string;
   passwordHash: string;
   role: 'superadmin' | 'admin';
+  wechatId?: string; // 微信号，用于联系管理员
   createdBy?: string;
   createdAt: Date;
   lastLogin?: Date;

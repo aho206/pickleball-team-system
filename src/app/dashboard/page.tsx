@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showCreateSession, setShowCreateSession] = useState(false);
+  const [showContactSettings, setShowContactSettings] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
@@ -213,6 +214,28 @@ export default function DashboardPage() {
     }
   };
 
+  const updateContactInfo = async (wechatId: string) => {
+    try {
+      const response = await fetch('/api/contact-info', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ wechatId }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert('联系信息更新成功');
+        setShowContactSettings(false);
+      } else {
+        alert(data.error || '更新失败');
+      }
+    } catch (error) {
+      alert('网络错误，请重试');
+    }
+  };
+
   if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -240,12 +263,20 @@ export default function DashboardPage() {
               创建会话
             </button>
             {isSuperAdmin && (
-              <button
-                onClick={() => setShowCreateUser(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                创建管理员
-              </button>
+              <>
+                <button
+                  onClick={() => setShowCreateUser(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  创建管理员
+                </button>
+                <button
+                  onClick={() => setShowContactSettings(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  联系信息
+                </button>
+              </>
             )}
           </div>
         }
@@ -475,6 +506,14 @@ export default function DashboardPage() {
             setShowCreateSession(false);
             router.push(`/admin/${sessionId}`);
           }}
+        />
+      )}
+
+      {/* 联系信息设置模态框 */}
+      {showContactSettings && (
+        <ContactSettingsModal 
+          onClose={() => setShowContactSettings(false)}
+          onSuccess={updateContactInfo}
         />
       )}
     </div>
@@ -719,6 +758,116 @@ function CreateSessionModal({ onClose, onSuccess }: { onClose: () => void; onSuc
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// 联系信息设置模态框组件
+function ContactSettingsModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (wechatId: string) => void }) {
+  const [wechatId, setWechatId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [loadingCurrent, setLoadingCurrent] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadCurrentWechatId();
+  }, []);
+
+  const loadCurrentWechatId = async () => {
+    try {
+      const response = await fetch('/api/contact-info');
+      const data = await response.json();
+      
+      if (data.success && data.data?.wechatId) {
+        setWechatId(data.data.wechatId);
+      }
+    } catch (error) {
+      console.error('获取当前微信号失败:', error);
+    } finally {
+      setLoadingCurrent(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (!wechatId.trim()) {
+      setError('微信号不能为空');
+      setLoading(false);
+      return;
+    }
+
+    if (wechatId.length > 50) {
+      setError('微信号长度不能超过50个字符');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await onSuccess(wechatId.trim());
+    } catch (error) {
+      setError('更新失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">设置联系信息</h3>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
+        {loadingCurrent ? (
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-pickleball-600 mx-auto mb-2"></div>
+            <p className="text-gray-600 text-sm">加载当前设置...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                管理员微信号
+              </label>
+              <input
+                type="text"
+                value={wechatId}
+                onChange={(e) => setWechatId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pickleball-500 focus:border-transparent"
+                placeholder="输入微信号"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                参与者可以通过此微信号联系您解决问题
+              </p>
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                {loading ? '保存中...' : '保存'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

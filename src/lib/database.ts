@@ -51,6 +51,7 @@ function initializeDatabase() {
       username TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL CHECK (role IN ('superadmin', 'admin')),
+      wechat_id TEXT DEFAULT 'aho206',
       created_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       last_login DATETIME,
@@ -58,6 +59,14 @@ function initializeDatabase() {
       FOREIGN KEY (created_by) REFERENCES users(id)
     )
   `);
+
+  // 检查是否需要添加wechat_id字段（用于现有数据库的迁移）
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN wechat_id TEXT DEFAULT 'aho206'`);
+    console.log('[Database] 已添加wechat_id字段');
+  } catch (error) {
+    // 字段已存在，忽略错误
+  }
 
   // 创建会话表
   db.exec(`
@@ -136,7 +145,7 @@ export function closeDatabase() {
 export function getUserById(userId: string): User | null {
   const database = getDatabase();
   const stmt = database.prepare(`
-    SELECT id, username, role, created_by, created_at, last_login, is_active
+    SELECT id, username, role, wechat_id, created_by, created_at, last_login, is_active
     FROM users 
     WHERE id = ?
   `);
@@ -149,11 +158,44 @@ export function getUserById(userId: string): User | null {
     username: row.username,
     passwordHash: '', // 不返回密码哈希
     role: row.role,
+    wechatId: row.wechat_id,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at),
     lastLogin: row.last_login ? new Date(row.last_login) : undefined,
     isActive: Boolean(row.is_active)
   };
+}
+
+/**
+ * 获取超级管理员的微信号（用于联系管理员功能）
+ */
+export function getSuperAdminWechatId(): string {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT wechat_id
+    FROM users 
+    WHERE role = 'superadmin' AND is_active = 1
+    ORDER BY created_at ASC
+    LIMIT 1
+  `);
+  
+  const row = stmt.get() as any;
+  return row?.wechat_id || 'aho206'; // 返回微信号或默认值
+}
+
+/**
+ * 更新超级管理员的微信号
+ */
+export function updateSuperAdminWechatId(userId: string, wechatId: string): boolean {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    UPDATE users 
+    SET wechat_id = ?
+    WHERE id = ? AND role = 'superadmin'
+  `);
+  
+  const result = stmt.run(wechatId, userId);
+  return result.changes > 0;
 }
 
 /**

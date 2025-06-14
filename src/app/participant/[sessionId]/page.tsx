@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { GameSession, Participant } from '@/lib/types'
+import ContactAdmin from '@/components/ContactAdmin'
 
 export default function ParticipantPage() {
   const params = useParams()
@@ -274,11 +275,19 @@ export default function ParticipantPage() {
           </div>
         </div>
 
-        {/* 刷新提示 */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-gray-500">
-            页面每5秒自动刷新 | 如有问题请联系管理员
-          </p>
+        {/* 联系管理员和刷新提示 */}
+        <div className="mt-8 space-y-6">
+          {/* 联系管理员 */}
+          <div className="max-w-md mx-auto">
+            <ContactAdmin />
+          </div>
+          
+          {/* 刷新提示 */}
+          <div className="text-center">
+            <p className="text-sm text-gray-500">
+              页面每5秒自动刷新
+            </p>
+          </div>
         </div>
       </div>
     </div>

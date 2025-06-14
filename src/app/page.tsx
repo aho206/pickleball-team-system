@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ContactAdmin from '@/components/ContactAdmin'
 
 export default function HomePage() {
   const [sessionId, setSessionId] = useState('')
@@ -132,6 +133,11 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 联系管理员 */}
+        <div className="max-w-md mx-auto mt-12">
+          <ContactAdmin />
         </div>
       </div>
     </div>
