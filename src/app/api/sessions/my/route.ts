@@ -4,8 +4,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { GameSession, ApiResponse } from '@/lib/types';
-import { getUserGameSessions } from '@/lib/memory-store';
-import { validateAuthSession, isAdmin } from '@/lib/auth';
+import { getUserGameSessions, getAllGameSessions } from '@/lib/memory-store';
+import { validateAuthSession, isAdmin, isSuperAdmin } from '@/lib/auth';
 
 /**
  * 获取当前用户的球局列表
@@ -39,8 +39,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       }, { status: 403 });
     }
 
-    // 获取用户的球局列表
-    const sessions = await getUserGameSessions(currentUser.id);
+    // 获取球局列表
+    let sessions: GameSession[];
+    
+    if (isSuperAdmin(currentUser.role)) {
+      // 超级管理员可以看到所有球局
+      sessions = await getAllGameSessions();
+    } else {
+      // 普通管理员只能看到自己创建的球局
+      sessions = await getUserGameSessions(currentUser.id);
+    }
 
     return NextResponse.json({
       success: true,
