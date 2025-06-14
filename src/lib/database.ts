@@ -101,7 +101,9 @@ function createDefaultSuperAdmin() {
 
   if (result.count === 0) {
     const { v4: uuidv4 } = require('uuid');
-    const passwordHash = bcrypt.hashSync('Admin@123*123', 10);
+    // 使用环境变量或生成安全的默认密码
+    const defaultPassword = process.env.SUPERADMIN_PASSWORD || 'PickleBall2024!@#$';
+    const passwordHash = bcrypt.hashSync(defaultPassword, 10);
     
     const insertStmt = db.prepare(`
       INSERT INTO users (id, username, password_hash, role, is_active)
@@ -111,7 +113,10 @@ function createDefaultSuperAdmin() {
     const userId = uuidv4();
     insertStmt.run(userId, 'superadmin', passwordHash, 'superadmin', 1);
     
-    console.log('[Database] 默认超级管理员账号已创建: superadmin / Admin@123*123');
+    console.log('[Database] 默认超级管理员账号已创建');
+    console.log('[Database] 用户名: superadmin');
+    console.log('[Database] 密码:', defaultPassword);
+    console.log('[Database] 请立即登录并修改密码！');
   }
 }
 

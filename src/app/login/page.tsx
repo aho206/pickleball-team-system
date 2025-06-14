@@ -129,7 +129,7 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500">
-                默认超级管理员: superadmin / Admin@123*123
+                如需帮助，请联系系统管理员
               </p>
             </div>
           </div>
