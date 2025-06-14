@@ -107,7 +107,7 @@ export default function LoginPage() {
 
             <div className="mt-8 pt-6 border-t border-gray-200">
               <div className="text-center mb-4">
-                <p className="text-sm text-gray-600">参与者？直接进入会话</p>
+                <p className="text-sm text-gray-600">参与者？直接进入球局</p>
               </div>
               
               <div className="space-y-3">
@@ -116,13 +116,13 @@ export default function LoginPage() {
                   value={sessionId}
                   onChange={(e) => setSessionId(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="输入会话ID"
+                  placeholder="输入球局ID"
                 />
                 <button
                   onClick={handleParticipantAccess}
                   className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                 >
-                  进入会话
+                  进入球局
                 </button>
               </div>
             </div>
