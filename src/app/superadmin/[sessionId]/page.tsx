@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { GameSession, Weight, Participant } from '@/lib/types'
 import { useSuperAdminSocket } from '@/hooks/useSocket'
+import Navigation from '@/components/ui/Navigation'
 
 export default function SuperAdminPage() {
   const params = useParams()
+  const router = useRouter()
   const sessionId = params.sessionId as string
   
   const [session, setSession] = useState<GameSession | null>(null)
@@ -56,15 +58,21 @@ export default function SuperAdminPage() {
   const loadSession = async () => {
     try {
       setLoading(true)
+      console.log('🔄 加载会话数据:', sessionId);
+      
       const response = await fetch(`/api/sessions?id=${sessionId}`)
       const data = await response.json()
       
       if (data.success) {
+        console.log('✅ 会话数据加载成功:', data.data);
+        console.log('📊 权重数据:', data.data.weights);
         setSession(data.data)
       } else {
+        console.error('❌ 加载会话失败:', data.error);
         setError(data.error || '加载会话失败')
       }
     } catch (err) {
+      console.error('❌ 网络错误:', err);
       setError('网络错误，请重试')
     } finally {
       setLoading(false)
@@ -78,6 +86,8 @@ export default function SuperAdminPage() {
     }
 
     try {
+      console.log('🔄 添加权重:', newWeight);
+      
       const response = await fetch(`/api/sessions/${sessionId}/weights`, {
         method: 'POST',
         headers: {
@@ -87,10 +97,18 @@ export default function SuperAdminPage() {
       });
 
       const data = await response.json();
+      console.log('📝 权重添加响应:', data);
       
       if (data.success) {
-        // 重新加载会话数据
-        await loadSession();
+        console.log('✅ 权重添加成功:', data.data);
+        
+        // 立即更新本地状态
+        setSession(prev => prev ? {
+          ...prev,
+          weights: [...prev.weights, data.data]
+        } : null);
+        
+        // 重置表单
         setNewWeight({
           player1: '',
           player2: '',
@@ -98,12 +116,17 @@ export default function SuperAdminPage() {
           type: 'teammate'
         });
         setShowAddWeight(false);
+        
+        // 重新加载会话数据确保同步
+        await loadSession();
+        
         alert('权重设置添加成功！');
       } else {
+        console.error('❌ 权重添加失败:', data.error);
         alert(data.error || '添加权重失败');
       }
     } catch (error) {
-      console.error('添加权重失败:', error);
+      console.error('❌ 添加权重网络错误:', error);
       alert('网络错误，请重试');
     }
   }
@@ -177,6 +200,15 @@ export default function SuperAdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 导航栏 */}
+      <Navigation
+        title="🔧 超级管理员控制台"
+        showBackButton={true}
+        backUrl="/dashboard"
+        backText="返回仪表板"
+        showHomeButton={true}
+      />
+      
       <div className="container mx-auto px-4 py-8">
         {/* 头部信息 */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -224,6 +256,9 @@ export default function SuperAdminPage() {
             
             {session.weights.length > 0 ? (
               <div className="space-y-3">
+                <div className="text-sm text-gray-600 mb-3">
+                  当前共有 <strong>{session.weights.length}</strong> 个权重设置
+                </div>
                 {session.weights.map((weight) => (
                   <div key={weight.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-center">
@@ -231,7 +266,7 @@ export default function SuperAdminPage() {
                         <div className="font-medium text-gray-800">
                           {getParticipantName(weight.player1)} & {getParticipantName(weight.player2)}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 mt-1">
                           <span className={`px-2 py-1 rounded text-xs ${
                             weight.type === 'teammate' 
                               ? 'bg-green-100 text-green-800' 
@@ -240,18 +275,21 @@ export default function SuperAdminPage() {
                             {weight.type === 'teammate' ? '队友偏好' : '对手偏好'}
                           </span>
                           <span className="ml-2">权重: {weight.weight}/10</span>
+                          <span className="ml-2 text-gray-400">
+                            创建于: {new Date(weight.createdAt).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                       <button
                         onClick={() => handleRemoveWeight(weight.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                        className="text-red-600 hover:text-red-800 text-sm px-3 py-1 rounded hover:bg-red-50"
                       >
                         删除
                       </button>
                     </div>
                     
                     {/* 权重条 */}
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full ${
@@ -266,7 +304,9 @@ export default function SuperAdminPage() {
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
-                暂无权重设置
+                <div className="text-4xl mb-2">⚖️</div>
+                <div>暂无权重设置</div>
+                <div className="text-sm mt-1">点击"添加权重"开始设置参与者偏好</div>
               </div>
             )}
           </div>
@@ -276,28 +316,55 @@ export default function SuperAdminPage() {
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">参与者列表</h2>
             
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {session.participants.map(participant => (
-                <div key={participant.id} className="border border-gray-200 rounded-lg p-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium text-gray-800">{participant.name}</div>
-                      <div className="text-sm text-gray-600">
-                        {participant.gamesPlayed} 场比赛 | 休息 {participant.restRounds} 轮
+              {session.participants.map(participant => {
+                // 计算该参与者的权重设置数量
+                const participantWeights = session.weights.filter(w => 
+                  w.player1 === participant.id || w.player2 === participant.id
+                );
+                const teammateWeights = participantWeights.filter(w => w.type === 'teammate').length;
+                const opponentWeights = participantWeights.filter(w => w.type === 'opponent').length;
+                
+                return (
+                  <div key={participant.id} className="border border-gray-200 rounded-lg p-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium text-gray-800">{participant.name}</div>
+                        <div className="text-sm text-gray-600">
+                          {participant.gamesPlayed} 场比赛 | 休息 {participant.restRounds} 轮
+                        </div>
+                        {/* 权重状态显示 */}
+                        <div className="flex items-center space-x-2 mt-1">
+                          {teammateWeights > 0 && (
+                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                              队友权重: {teammateWeights}
+                            </span>
+                          )}
+                          {opponentWeights > 0 && (
+                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">
+                              对手权重: {opponentWeights}
+                            </span>
+                          )}
+                          {participantWeights.length === 0 && (
+                            <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded text-xs">
+                              无权重设置
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        participant.status === 'playing' ? 'bg-green-100 text-green-800' :
+                        participant.status === 'queued' ? 'bg-yellow-100 text-yellow-800' :
+                        participant.status === 'resting' ? 'bg-gray-100 text-gray-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {participant.status === 'playing' ? '比赛中' :
+                         participant.status === 'queued' ? '排队中' :
+                         participant.status === 'resting' ? '休息中' : '离开'}
+                      </span>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      participant.status === 'playing' ? 'bg-green-100 text-green-800' :
-                      participant.status === 'queued' ? 'bg-yellow-100 text-yellow-800' :
-                      participant.status === 'resting' ? 'bg-gray-100 text-gray-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {participant.status === 'playing' ? '比赛中' :
-                       participant.status === 'queued' ? '排队中' :
-                       participant.status === 'resting' ? '休息中' : '离开'}
-                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
