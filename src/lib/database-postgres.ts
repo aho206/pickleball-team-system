@@ -415,11 +415,14 @@ export async function getGameSessionFromDB(sessionId: string): Promise<GameSessi
   const database = getDatabase();
   
   try {
-    const result = await database.query('SELECT data FROM sessions WHERE id = $1', [sessionId]);
+    const result = await database.query('SELECT data, created_by FROM sessions WHERE id = $1', [sessionId]);
     
     if (result.rows.length === 0) return null;
     
-    return JSON.parse(result.rows[0].data);
+    const session = JSON.parse(result.rows[0].data);
+    // 确保createdBy字段正确设置
+    session.createdBy = result.rows[0].created_by;
+    return session;
   } catch (error) {
     console.error('[PostgreSQL] 获取会话失败:', error);
     return null;
@@ -434,12 +437,17 @@ export async function getUserSessions(userId: string): Promise<GameSession[]> {
   
   try {
     const result = await database.query(`
-      SELECT data FROM sessions 
+      SELECT data, created_by FROM sessions 
       WHERE created_by = $1 
       ORDER BY created_at DESC
     `, [userId]);
     
-    return result.rows.map(row => JSON.parse(row.data));
+    return result.rows.map(row => {
+      const session = JSON.parse(row.data);
+      // 确保createdBy字段正确设置
+      session.createdBy = row.created_by;
+      return session;
+    });
   } catch (error) {
     console.error('[PostgreSQL] 获取用户会话失败:', error);
     return [];
@@ -454,11 +462,16 @@ export async function getAllSessions(): Promise<GameSession[]> {
   
   try {
     const result = await database.query(`
-      SELECT data FROM sessions 
+      SELECT data, created_by FROM sessions 
       ORDER BY created_at DESC
     `);
     
-    return result.rows.map(row => JSON.parse(row.data));
+    return result.rows.map(row => {
+      const session = JSON.parse(row.data);
+      // 确保createdBy字段正确设置
+      session.createdBy = row.created_by;
+      return session;
+    });
   } catch (error) {
     console.error('[PostgreSQL] 获取所有会话失败:', error);
     return [];
