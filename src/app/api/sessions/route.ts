@@ -1,5 +1,5 @@
 /**
- * 会话管理API路由
+ * 球局管理API路由
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,7 +10,7 @@ import { saveGameSession, getGameSession, validateCustomSessionId, isSessionIdEx
 import { validateAuthSession, isAdmin, isSuperAdmin } from '@/lib/auth';
 
 /**
- * 创建新的游戏会话
+ * 创建新的游戏球局
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<GameSession>>> {
   try {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (!isAdmin(currentUser.role)) {
       return NextResponse.json({
         success: false,
-        error: '权限不足，仅管理员可以创建会话'
+        error: '权限不足，仅管理员可以创建球局'
       }, { status: 403 });
     }
 
@@ -59,11 +59,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       }, { status: 400 });
     }
 
-    // 处理会话ID
+    // 处理球局ID
     let sessionId: string;
     
     if (customSessionId) {
-      // 验证自定义会话ID格式
+      // 验证自定义球局ID格式
       const validation = validateCustomSessionId(customSessionId);
       if (!validation.valid) {
         return NextResponse.json({
@@ -72,11 +72,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         }, { status: 400 });
       }
       
-      // 检查会话ID是否已存在
-      if (isSessionIdExists(customSessionId)) {
+      // 检查球局ID是否已存在
+      if (await isSessionIdExists(customSessionId)) {
         return NextResponse.json({
           success: false,
-          error: '会话ID已存在，请选择其他ID'
+          error: '球局ID已存在，请选择其他ID'
         }, { status: 409 });
       }
       
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       hasLeft: false  // 初始化为未离开
     }));
 
-    // 创建游戏会话
+    // 创建游戏球局
     const session: GameSession = {
       id: sessionId,
       participants,
@@ -170,11 +170,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     return NextResponse.json({
       success: true,
       data: session,
-      message: '会话创建成功'
+      message: '球局创建成功'
     });
 
   } catch (error) {
-    console.error('创建会话失败:', error);
+    console.error('创建球局失败:', error);
     return NextResponse.json({
       success: false,
       error: '服务器内部错误'
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 }
 
 /**
- * 获取会话信息
+ * 获取球局信息
  */
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<GameSession>>> {
   try {
@@ -223,7 +223,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 }
 
 /**
- * 删除会话
+ * 删除球局
  */
 export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResponse<void>>> {
   try {
@@ -260,7 +260,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
     if (!isAdmin(currentUser.role)) {
       return NextResponse.json({
         success: false,
-        error: '权限不足，仅管理员可以删除会话'
+        error: '权限不足，仅管理员可以删除球局'
       }, { status: 403 });
     }
 
@@ -269,11 +269,12 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
 
     return NextResponse.json({
       success: true,
-      message: '会话删除成功'
+      data: undefined,
+      message: '球局删除成功'
     });
 
   } catch (error) {
-    console.error('删除会话失败:', error);
+    console.error('删除球局失败:', error);
     return NextResponse.json({
       success: false,
       error: '服务器内部错误'
