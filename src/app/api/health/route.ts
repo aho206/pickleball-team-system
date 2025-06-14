@@ -16,7 +16,8 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       database: wechatId ? 'connected' : 'disconnected',
       environment: process.env.NODE_ENV || 'development',
-      databaseType: process.env.DATABASE_URL && process.env.NODE_ENV === 'production' ? 'PostgreSQL' : 'SQLite'
+      databaseType: process.env.DATABASE_URL && process.env.NODE_ENV === 'production' ? 'PostgreSQL' : 'SQLite',
+      version: '1.0.1'
     });
   } catch (error) {
     console.error('Health check failed:', error);
@@ -24,7 +25,8 @@ export async function GET() {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
       error: error instanceof Error ? error.message : 'Unknown error',
-      databaseType: process.env.DATABASE_URL && process.env.NODE_ENV === 'production' ? 'PostgreSQL' : 'SQLite'
+      databaseType: process.env.DATABASE_URL && process.env.NODE_ENV === 'production' ? 'PostgreSQL' : 'SQLite',
+      version: '1.0.1'
     }, { status: 500 });
   }
 } 
