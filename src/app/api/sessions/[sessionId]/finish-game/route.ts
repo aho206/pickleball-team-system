@@ -10,7 +10,7 @@ import { validateAuthSession, isAdmin } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { sessionId: string } }
 ): Promise<NextResponse<ApiResponse<GameSession>>> {
   try {
     // 验证认证
@@ -40,7 +40,7 @@ export async function POST(
       }, { status: 403 });
     }
 
-    const sessionId = params.id;
+    const sessionId = params.sessionId;
     const { courtId } = await request.json();
 
     if (!courtId) {

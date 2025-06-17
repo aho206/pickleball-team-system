@@ -5,10 +5,10 @@ import { v4 as uuidv4 } from 'uuid';
 // 添加参与者到球局
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { sessionId: string } }
 ) {
   try {
-    const sessionId = params.id;
+    const sessionId = params.sessionId;
     const { name } = await request.json();
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -64,10 +64,10 @@ export async function POST(
 // 移除参与者从球局
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { sessionId: string } }
 ) {
   try {
-    const sessionId = params.id;
+    const sessionId = params.sessionId;
     const { searchParams } = new URL(request.url);
     const participantId = searchParams.get('participantId');
 

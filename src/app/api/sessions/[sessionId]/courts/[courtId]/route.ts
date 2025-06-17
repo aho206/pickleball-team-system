@@ -12,7 +12,7 @@ import { validateAuthSession, isAdmin } from '@/lib/auth';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; courtId: string } }
+  { params }: { params: { sessionId: string; courtId: string } }
 ): Promise<NextResponse<ApiResponse<GameSession>>> {
   try {
     // 验证认证
@@ -42,7 +42,7 @@ export async function PATCH(
       }, { status: 403 });
     }
 
-    const sessionId = params.id;
+    const sessionId = params.sessionId;
     const courtId = parseInt(params.courtId);
     const { name } = await request.json();
 

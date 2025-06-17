@@ -9,10 +9,10 @@ import { getGameSession, saveGameSession } from '@/lib/memory-store';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { sessionId: string } }
 ): Promise<NextResponse<ApiResponse<GameSession>>> {
   try {
-    const sessionId = params.id;
+    const sessionId = params.sessionId;
     const { courtId } = await request.json();
 
     if (!sessionId) {

@@ -1,29 +1,48 @@
 /**
- * 生成新轮次API路由
+ * 开始下一轮比赛的API路由
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { GameSession, ApiResponse } from '@/lib/types';
 import { generateOptimalTeams } from '@/lib/algorithm';
 import { getGameSession, saveGameSession } from '@/lib/memory-store';
+import { validateAuthSession, isAdmin } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { sessionId: string } }
 ): Promise<NextResponse<ApiResponse<GameSession>>> {
   try {
-    const sessionId = params.id;
+    // 验证认证
+    const token = request.cookies.get('auth-token')?.value || 
+                  request.headers.get('authorization')?.replace('Bearer ', '');
 
-    if (!sessionId) {
+    if (!token) {
       return NextResponse.json({
         success: false,
-        error: '球局ID不能为空'
-      }, { status: 400 });
+        error: '未提供认证token'
+      }, { status: 401 });
     }
 
-    // 从内存存储获取球局数据
+    const currentUser = await validateAuthSession(token);
+    if (!currentUser) {
+      return NextResponse.json({
+        success: false,
+        error: '认证token无效或已过期'
+      }, { status: 401 });
+    }
+
+    // 检查管理员权限
+    if (!isAdmin(currentUser.role)) {
+      return NextResponse.json({
+        success: false,
+        error: '权限不足，仅管理员可以开始下一轮'
+      }, { status: 403 });
+    }
+
+    const sessionId = params.sessionId;
     const session = await getGameSession(sessionId);
-    
+
     if (!session) {
       return NextResponse.json({
         success: false,
@@ -31,22 +50,40 @@ export async function POST(
       }, { status: 404 });
     }
 
+    // 检查是否有正在进行的比赛
+    const hasActiveGames = session.courts.some(court => court.status === 'playing');
+    if (hasActiveGames) {
+      return NextResponse.json({
+        success: false,
+        error: '还有比赛正在进行中，请等待所有比赛结束后再开始下一轮'
+      }, { status: 400 });
+    }
+
+    // 更新统计信息
+    session.stats.currentRound += 1;
+
+    // 为所有参与者增加休息轮数
+    for (const participant of session.participants) {
+      if (participant.status === 'resting') {
+        participant.restRounds += 1;
+      }
+    }
+
     // 生成新的队伍分配
     const assignment = generateOptimalTeams(
-      session.participants,
+      session.participants.filter(p => !p.hasLeft), // 只包含未离开的参与者
       session.settings.courtCount,
-      session.weights
+      session.weights || []
     );
 
-    // 更新球局数据
     session.courts = assignment.courts;
     session.queue = assignment.queue;
-    session.stats.currentRound += 1;
-    session.updatedAt = new Date();
 
-    // 更新参与者状态
+    // 重置所有参与者状态为休息
     for (const participant of session.participants) {
-      participant.status = 'resting';
+      if (!participant.hasLeft) {
+        participant.status = 'resting';
+      }
     }
 
     // 设置正在比赛的参与者状态
@@ -83,17 +120,19 @@ export async function POST(
       }
     }
 
-    // 保存到内存存储
-    await saveGameSession(session, session.createdBy);
+    session.updatedAt = new Date();
+
+    // 保存更新后的球局
+    await saveGameSession(session, currentUser.id);
 
     return NextResponse.json({
       success: true,
       data: session,
-      message: '新轮次生成成功'
+      message: '下一轮开始成功'
     });
 
   } catch (error) {
-    console.error('生成新轮次失败:', error);
+    console.error('开始下一轮失败:', error);
     return NextResponse.json({
       success: false,
       error: '服务器内部错误'

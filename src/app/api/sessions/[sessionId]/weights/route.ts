@@ -13,13 +13,13 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { sessionId: string } }
 ): Promise<NextResponse<ApiResponse<Weight>>> {
   try {
     // 暂时跳过认证验证，专注于功能测试
     // TODO: 生产环境需要恢复认证
     
-    const sessionId = params.id;
+    const sessionId = params.sessionId;
     const body = await request.json();
     const { player1, player2, weight, type } = body;
 
@@ -123,13 +123,13 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { sessionId: string } }
 ): Promise<NextResponse<ApiResponse<null>>> {
   try {
     // 暂时跳过认证验证，专注于功能测试
     // TODO: 生产环境需要恢复认证
 
-    const sessionId = params.id;
+    const sessionId = params.sessionId;
     const { searchParams } = new URL(request.url);
     const weightId = searchParams.get('weightId');
 
