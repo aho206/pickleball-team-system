@@ -183,7 +183,7 @@ export default function SessionPage() {
                 <div key={court.id} className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-900">
-                      场地 {court.id}
+                      {court.name || `场地 ${court.id}`}
                     </h3>
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       court.status === 'playing' 

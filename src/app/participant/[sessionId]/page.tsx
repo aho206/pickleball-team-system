@@ -156,7 +156,7 @@ export default function ParticipantPage() {
             <div className="space-y-4">
               {session.courts.map((court, index) => (
                 <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-800 mb-3">场地 {index + 1}</h3>
+                  <h3 className="font-semibold text-gray-800 mb-3">{court.name || `场地 ${court.id}`}</h3>
                   
                   {court.team1 && court.team2 ? (
                     <div className="grid grid-cols-2 gap-4">

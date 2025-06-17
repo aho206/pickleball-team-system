@@ -144,7 +144,7 @@ export default function DashboardPage() {
           加入时间: p.joinedAt
         })),
         当前比赛: session.courts.map(court => ({
-          场地: court.id,
+          场地: court.name || `场地 ${court.id}`,
           状态: court.status === 'playing' ? '比赛中' : '空闲',
           队伍A: court.team1 ? [
             session.participants.find(p => p.id === court.team1?.player1)?.name,

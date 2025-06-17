@@ -39,6 +39,7 @@ export function generateOptimalTeams(
     return {
       courts: Array.from({ length: courtCount }, (_, i) => ({
         id: i + 1,
+        name: `场地 ${i + 1}`,
         team1: null,
         team2: null,
         status: 'empty' as const
@@ -105,8 +106,10 @@ export function generateOptimalTeams(
   
   // 补充空场地
   while (courts.length < courtCount) {
+    const courtId = courts.length + 1;
     courts.push({
-      id: courts.length + 1,
+      id: courtId,
+      name: `场地 ${courtId}`,
       team1: null,
       team2: null,
       status: 'empty' as const
@@ -135,6 +138,7 @@ function assignPlayersToCourts(
 ): Court[] {
   const courts: Court[] = Array.from({ length: courtCount }, (_, i) => ({
     id: i + 1,
+    name: `场地 ${i + 1}`,
     team1: null,
     team2: null,
     status: 'empty' as const
@@ -150,6 +154,7 @@ function assignPlayersToCourts(
     if (bestMatch) {
       courts[0] = {
         id: 1,
+        name: courts[0].name || '场地 1',
         team1: bestMatch.team1,
         team2: bestMatch.team2,
         status: 'playing',
@@ -168,6 +173,7 @@ function assignPlayersToCourts(
       if (match && match.team1 && match.team2) {
         courts[i] = {
           id: i + 1,
+          name: courts[i].name || `场地 ${i + 1}`,
           team1: match.team1,
           team2: match.team2,
           status: 'playing',

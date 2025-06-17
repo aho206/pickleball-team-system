@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { GameSession, Participant, Court, GameMatch } from '@/lib/types'
 import Navigation from '@/components/ui/Navigation'
+import EditableCourtName from '@/components/EditableCourtName'
 
 export default function AdminPage() {
   const params = useParams()
@@ -153,6 +154,28 @@ export default function AdminPage() {
       alert('网络错误，请重试')
     }
   }
+
+  const updateCourtName = async (courtId: number, newName: string) => {
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}/courts/${courtId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newName }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSession(data.data);
+      } else {
+        alert(data.error || '更新场地名称失败');
+      }
+    } catch (error) {
+      console.error('更新场地名称失败:', error);
+      alert('网络错误，请重试');
+    }
+  };
 
   if (loading) {
     return (
@@ -326,9 +349,13 @@ export default function AdminPage() {
             
             <div className="space-y-4">
               {session.courts.map((court, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                <div key={index} className="border border-gray-200 rounded-lg p-4 group">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-semibold text-gray-800">场地 {court.id}</h3>
+                    <EditableCourtName
+                      courtId={court.id}
+                      currentName={court.name || `场地 ${court.id}`}
+                      onUpdate={updateCourtName}
+                    />
                     {(court.team1 && court.team2) || session.queue.length > 0 ? (
                       <button
                         onClick={() => nextGroup(court.id)}

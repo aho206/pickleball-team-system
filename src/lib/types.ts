@@ -38,6 +38,7 @@ export type CourtStatus = 'playing' | 'waiting' | 'empty';
 // 场地接口
 export interface Court {
   id: number;
+  name?: string;  // 场地名称，可选字段
   team1: Team | null;
   team2: Team | null;
   status: CourtStatus;
